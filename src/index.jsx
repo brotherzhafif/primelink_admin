@@ -9,18 +9,22 @@ import Blog from "./pages/Blog";
 import TambahArtikel from "./pages/TambahArtikel";
 import DaftarPermintaan from "./pages/DaftarPermintaan";
 import EditBlog from "./pages/EditBlog";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>
-      <Layout>
-        <Routes>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route element={<Layout />}>
           <Route path="/" element={<Blog />} />
           <Route path="/tambah" element={<TambahArtikel />} />
           <Route path="/permintaan" element={<DaftarPermintaan />} />
           <Route path="/edit/:id" element={<EditBlog />} />
-        </Routes>
-      </Layout>
+        </Route>
+      </Routes>
     </Router>
   </React.StrictMode>
 );

@@ -81,11 +81,12 @@ const Blog = () => {
     getBlogs()
       .then((res) => {
         setData(
-          res.map((item) => ({
-            id: item.id || item._id, // Hanya gunakan id unik dari backend
+          res.map((item, idx) => ({
+            id: item.id || item._id || idx + 1,
             title: item.judul_blog,
             desc: item.isi_blog,
             image: item.gambar || "-",
+            // kategori dihapus
           }))
         );
         setLoading(false);
@@ -200,11 +201,8 @@ const Blog = () => {
               </tr>
             ) : (
               currentItems.map((item, idx) => (
-                <tr
-                  key={item.id ? String(item.id) : `noid-${idx}`}
-                  className="border-t hover:bg-gray-50"
-                >
-                  <td className="px-4 py-2">{idx + 1 + (currentPage - 1) * itemsPerPage}</td>
+                <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td className="px-4 py-2">{item.title}</td>
                   <td className="px-4 py-2">{item.desc}</td>
                   <td className="px-4 py-2">

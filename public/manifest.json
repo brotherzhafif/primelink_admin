@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "PrimeLink Admin",
+  "name": "Halaman Admin Layanan PrimeLink",
   "icons": [
     {
       "src": "favicon.ico",

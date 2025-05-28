@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addBlog } from "../api/primelink";
+import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 
 const TambahArtikel = () => {
@@ -17,14 +17,16 @@ const TambahArtikel = () => {
     setLoading(true);
     setErrMsg("");
     try {
-      await addBlog({
-        judul_blog: judul,
-        isi_blog: deskripsi,
-        gambar: foto,
+      const formData = new FormData();
+      formData.append("judul_blog", judul);
+      formData.append("isi_blog", deskripsi);
+      if (foto) formData.append("gambar", foto);
+      await axiosInstance.post("/blog", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       navigate("/");
     } catch (err) {
-      setErrMsg(err.message);
+      setErrMsg(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }

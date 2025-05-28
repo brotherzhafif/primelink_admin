@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getRequests, updateRequestStatus } from "../api/primelink";
+import axiosInstance from "../api/axiosInstance"; // ganti import axios
 
 const STATUS_OPTIONS = [
   { value: "Pending", label: "Pending" },
@@ -74,11 +74,15 @@ const DaftarPermintaan = () => {
 
   // Ambil data dari API
   useEffect(() => {
-    setLoading(true);
-    getRequests()
-      .then((res) => setData(res))
-      .catch(() => setData([]))
-      .finally(() => setLoading(false));
+    const fetchData = async () => {
+      try {
+        const response = await axiosInstance.get("/request"); // endpoint tanpa /api karena baseURL sudah /api
+        setData(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
   }, []);
 
   const handleSearch = (item) => {
@@ -97,7 +101,7 @@ const DaftarPermintaan = () => {
   // Update status permintaan dengan dropdown
   const handleUpdateStatus = async (id_request, status) => {
     try {
-      await updateRequestStatus(id_request, status);
+      await axiosInstance.put(`/request/${id_request}`, { status: status });
       setData((prev) =>
         prev.map((item) =>
           item.id_request === id_request ? { ...item, status } : item
@@ -175,10 +179,10 @@ const DaftarPermintaan = () => {
                       value={item.status}
                       onChange={e => handleUpdateStatus(item.id_request, e.target.value)}
                       className={`border rounded px-2 py-1 ${item.status === "Done"
-                          ? "bg-green-100 text-green-700"
-                          : item.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
+                        ? "bg-green-100 text-green-700"
+                        : item.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
                         }`}
                     >
                       {STATUS_OPTIONS.map(opt => (
