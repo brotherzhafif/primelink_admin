@@ -177,7 +177,7 @@ const Blog = () => {
               <th className="px-4 py-3">Judul</th>
               <th className="px-4 py-3">Deskripsi</th>
               <th className="px-4 py-3">Gambar</th>
-              <th className="px-4 py-3">Updated At</th>
+              <th className="px-4 py-3">Updated</th>
               {/* <th className="px-4 py-3">Kategori</th> */}
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
