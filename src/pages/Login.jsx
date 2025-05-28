@@ -61,11 +61,6 @@ const Login = () => {
                 >
                     {loading ? "Loading..." : "Login"}
                 </button>
-                <div className="mt-4 text-center">
-                    <a href="/register" className="text-blue-600 hover:underline">
-                        Belum punya akun? Register
-                    </a>
-                </div>
             </form>
         </div>
     );
