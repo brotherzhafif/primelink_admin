@@ -10,7 +10,6 @@ import TambahArtikel from "./pages/TambahArtikel";
 import DaftarPermintaan from "./pages/DaftarPermintaan";
 import EditBlog from "./pages/EditBlog";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
