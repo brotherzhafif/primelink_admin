@@ -86,6 +86,7 @@ const Blog = () => {
             title: item.judul_blog,
             desc: item.isi_blog,
             image: item.gambar || "-",
+            updated_at: item.updated_at || item.updatedAt || "-", // tambahkan updated_at
             // kategori dihapus
           }))
         );
@@ -176,6 +177,7 @@ const Blog = () => {
               <th className="px-4 py-3">Judul</th>
               <th className="px-4 py-3">Deskripsi</th>
               <th className="px-4 py-3">Gambar</th>
+              <th className="px-4 py-3">Updated At</th>
               {/* <th className="px-4 py-3">Kategori</th> */}
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
@@ -183,19 +185,19 @@ const Blog = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center px-4 py-4 text-gray-400">
+                <td colSpan="7" className="text-center px-4 py-4 text-gray-400">
                   Memuat data...
                 </td>
               </tr>
             ) : fetchError ? (
               <tr>
-                <td colSpan="6" className="text-center px-4 py-4 text-red-500">
+                <td colSpan="7" className="text-center px-4 py-4 text-red-500">
                   {fetchError}
                 </td>
               </tr>
             ) : currentItems.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center px-4 py-4 text-gray-400">
+                <td colSpan="7" className="text-center px-4 py-4 text-gray-400">
                   Tidak ada data ditemukan.
                 </td>
               </tr>
@@ -215,6 +217,22 @@ const Blog = () => {
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {typeof item.updated_at === "string" && item.updated_at.includes(":")
+                      ? (() => {
+                        // Format: DD:MM:YYYY:HH
+                        const parts = item.updated_at.split(":");
+                        if (parts.length !== 4) return "-";
+                        const [d, m, y, h] = parts;
+                        const monthNames = [
+                          "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                          "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                        ];
+                        const monthIdx = parseInt(m, 10) - 1;
+                        return `${d} ${monthNames[monthIdx] || m} ${y}, ${h}:00`;
+                      })()
+                      : "-"}
                   </td>
                   {/* <td className="px-4 py-2">{item.category}</td> */}
                   <td className="px-4 py-2 text-center">
