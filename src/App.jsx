@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar";
 import Blog from "./pages/Blog";
 import TambahArtikel from "./pages/TambahArtikel";
 import DaftarPermintaan from "./pages/DaftarPermintaan";
+import EditBlog from "./pages/EditBlog";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
             <Route path="/" element={<Blog />} />
             <Route path="/tambah" element={<TambahArtikel />} />
             <Route path="/permintaan" element={<DaftarPermintaan />} />
+            <Route path="/edit/:id" element={<EditBlog />} />
           </Routes>
         </div>
       </div>

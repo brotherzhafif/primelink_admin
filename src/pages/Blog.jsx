@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getBlogs, deleteBlog } from "../api/primelink";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const getPaginationGroup = () => {
@@ -38,11 +39,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`w-8 h-8 rounded-full text-sm ${
-              currentPage === page
-                ? "bg-blue-900 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`w-8 h-8 rounded-full text-sm ${currentPage === page
+              ? "bg-blue-900 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+              }`}
           >
             {page}
           </button>
@@ -62,23 +62,58 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 const Blog = () => {
   const navigate = useNavigate();
 
-  // Dummy Data
-  const data = [...Array(100)].map((_, i) => ({
-    id: i + 1,
-    title: "Macbook Pro 16",
-    desc: "#123-456ABC",
-    image: "123",
-    category: "Apple"
-  }));
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
   const [searchTerm, setSearchTerm] = useState("");
   const [searchColumn, setSearchColumn] = useState("title");
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = () => {
+    setLoading(true);
+    getBlogs()
+      .then((res) => {
+        setData(
+          res.map((item) => ({
+            id: item.id || item._id, // Hanya gunakan id unik dari backend
+            title: item.judul_blog,
+            desc: item.isi_blog,
+            image: item.gambar || "-",
+          }))
+        );
+        setLoading(false);
+      })
+      .catch((err) => {
+        setFetchError(err.message);
+        setLoading(false);
+      });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Yakin ingin menghapus artikel ini?")) return;
+    setDeleteLoading(true);
+    try {
+      await deleteBlog(id);
+      setData((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      alert("Gagal menghapus: " + err.message);
+    }
+    setDeleteLoading(false);
+  };
+
+  const handleEdit = (id) => {
+    navigate(`/edit/${id}`);
+  };
+
   const handleSearch = (item) => {
-    const target = item[searchColumn].toLowerCase();
+    const target = (item[searchColumn] || "").toLowerCase();
     return target.includes(searchTerm.toLowerCase());
   };
 
@@ -140,30 +175,68 @@ const Blog = () => {
               <th className="px-4 py-3">Judul</th>
               <th className="px-4 py-3">Deskripsi</th>
               <th className="px-4 py-3">Gambar</th>
-              <th className="px-4 py-3">Kategori</th>
+              {/* <th className="px-4 py-3">Kategori</th> */}
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((item) => (
-              <tr key={item.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-2">{item.id}</td>
-                <td className="px-4 py-2">{item.title}</td>
-                <td className="px-4 py-2">{item.desc}</td>
-                <td className="px-4 py-2">{item.image}</td>
-                <td className="px-4 py-2">{item.category}</td>
-                <td className="px-4 py-2 text-center">
-                  <button className="text-blue-600 hover:underline mr-2">Edit</button>
-                  <button className="text-red-600 hover:underline">Delete</button>
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="text-center px-4 py-4 text-gray-400">
+                  Memuat data...
                 </td>
               </tr>
-            ))}
-            {currentItems.length === 0 && (
+            ) : fetchError ? (
+              <tr>
+                <td colSpan="6" className="text-center px-4 py-4 text-red-500">
+                  {fetchError}
+                </td>
+              </tr>
+            ) : currentItems.length === 0 ? (
               <tr>
                 <td colSpan="6" className="text-center px-4 py-4 text-gray-400">
                   Tidak ada data ditemukan.
                 </td>
               </tr>
+            ) : (
+              currentItems.map((item, idx) => (
+                <tr
+                  key={item.id ? String(item.id) : `noid-${idx}`}
+                  className="border-t hover:bg-gray-50"
+                >
+                  <td className="px-4 py-2">{idx + 1 + (currentPage - 1) * itemsPerPage}</td>
+                  <td className="px-4 py-2">{item.title}</td>
+                  <td className="px-4 py-2">{item.desc}</td>
+                  <td className="px-4 py-2">
+                    {item.image && item.image !== "-" ? (
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="max-h-20 max-w-xs rounded shadow"
+                      />
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  {/* <td className="px-4 py-2">{item.category}</td> */}
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      className="text-blue-600 hover:underline mr-2"
+                      onClick={() => handleEdit(item.id)}
+                      disabled={deleteLoading}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-red-600 hover:underline"
+                      onClick={() => handleDelete(item.id)}
+                      disabled={deleteLoading}
+                    >
+                      {deleteLoading ? "Deleting..." : "Delete"}
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

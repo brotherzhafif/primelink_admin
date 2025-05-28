@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getRequests, updateRequestStatus } from "../api/primelink";
+
+const STATUS_OPTIONS = [
+  { value: "Pending", label: "Pending" },
+  { value: "Canceled", label: "Canceled" },
+  { value: "Done", label: "Done" },
+];
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const getPaginationGroup = () => {
@@ -37,11 +44,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`w-8 h-8 rounded-full text-sm ${
-              currentPage === page
-                ? "bg-blue-900 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`w-8 h-8 rounded-full text-sm ${currentPage === page
+              ? "bg-blue-900 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+              }`}
           >
             {page}
           </button>
@@ -59,25 +65,25 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 const DaftarPermintaan = () => {
-  // Dummy Data
-  const data = [...Array(100)].map((_, i) => ({
-    id: i + 1,
-    namaLengkap: `User ${i + 1}`,
-    email: `user${i + 1}@example.com`,
-    nomorHP: `0812345678${i}`,
-    pesan: `Pesan nomor ${i + 1}`,
-    status: i === 1 ? "Selesai" : i === 0 ? "Menunggu" : "Pending",
-  }));
-
+  const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchColumn, setSearchColumn] = useState("namaLengkap");
+  const [searchColumn, setSearchColumn] = useState("nama_lengkap");
+  const [loading, setLoading] = useState(false);
+
+  // Ambil data dari API
+  useEffect(() => {
+    setLoading(true);
+    getRequests()
+      .then((res) => setData(res))
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleSearch = (item) => {
-    const target = item[searchColumn].toLowerCase();
-    return target.includes(searchTerm.toLowerCase());
+    const value = (item[searchColumn] || "").toString().toLowerCase();
+    return value.includes(searchTerm.toLowerCase());
   };
 
   const filteredData = data.filter(handleSearch);
@@ -87,6 +93,20 @@ const DaftarPermintaan = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // Update status permintaan dengan dropdown
+  const handleUpdateStatus = async (id_request, status) => {
+    try {
+      await updateRequestStatus(id_request, status);
+      setData((prev) =>
+        prev.map((item) =>
+          item.id_request === id_request ? { ...item, status } : item
+        )
+      );
+    } catch (e) {
+      alert("Gagal update status");
+    }
+  };
 
   return (
     <div>
@@ -103,9 +123,9 @@ const DaftarPermintaan = () => {
             }}
             className="border px-2 py-1 rounded"
           >
-            <option value="namaLengkap">Nama Lengkap</option>
+            <option value="nama_lengkap">Nama Lengkap</option>
             <option value="email">Email</option>
-            <option value="nomorHP">Nomor HP</option>
+            <option value="nomor_hp">Nomor HP</option>
             <option value="pesan">Pesan</option>
             <option value="status">Status</option>
           </select>
@@ -132,29 +152,41 @@ const DaftarPermintaan = () => {
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Nomor HP</th>
               <th className="px-4 py-3">Pesan</th>
-              <th className="px-4 py-3 text-center">Status / Actions</th>
+              <th className="px-4 py-3 text-center">Status</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.length > 0 ? (
-              currentItems.map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">{item.id}</td>
-                  <td className="px-4 py-2">{item.namaLengkap}</td>
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="text-center px-4 py-4 text-gray-400">
+                  Loading...
+                </td>
+              </tr>
+            ) : currentItems.length > 0 ? (
+              currentItems.map((item, idx) => (
+                <tr key={item.id_request} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                  <td className="px-4 py-2">{item.nama_lengkap}</td>
                   <td className="px-4 py-2">{item.email}</td>
-                  <td className="px-4 py-2">{item.nomorHP}</td>
+                  <td className="px-4 py-2">{item.nomor_hp}</td>
                   <td className="px-4 py-2">{item.pesan}</td>
                   <td className="px-4 py-2 text-center">
-                    {item.status === "Selesai" ? (
-                      <span className="text-green-600 font-semibold">Selesai</span>
-                    ) : item.status === "Menunggu" ? (
-                      <span className="text-yellow-600 font-semibold">Menunggu</span>
-                    ) : (
-                      <>
-                        <button className="text-blue-600 hover:underline mr-2">Edit</button>
-                        <button className="text-red-600 hover:underline">Delete</button>
-                      </>
-                    )}
+                    <select
+                      value={item.status}
+                      onChange={e => handleUpdateStatus(item.id_request, e.target.value)}
+                      className={`border rounded px-2 py-1 ${item.status === "Done"
+                          ? "bg-green-100 text-green-700"
+                          : item.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                    >
+                      {STATUS_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                 </tr>
               ))

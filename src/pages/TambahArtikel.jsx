@@ -1,14 +1,50 @@
 import { useState } from "react";
+import { addBlog } from "../api/primelink";
+import { useNavigate } from "react-router-dom";
 
 const TambahArtikel = () => {
   const [judul, setJudul] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [foto, setFoto] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ judul, deskripsi, foto });
-    // TODO: Integrasi dengan backend / simpan ke state
+    setLoading(true);
+    setErrMsg("");
+    try {
+      await addBlog({
+        judul_blog: judul,
+        isi_blog: deskripsi,
+        gambar: foto,
+      });
+      navigate("/");
+    } catch (err) {
+      setErrMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFoto(file);
+    if (file) {
+      setUploading(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+      setUploading(false);
+    }
   };
 
   return (
@@ -44,13 +80,32 @@ const TambahArtikel = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l6-6 4 4 8-8" />
             </svg>
             <span>Masukkan Foto</span>
-            <input type="file" className="hidden" onChange={(e) => setFoto(e.target.files[0])} />
+            <input type="file" className="hidden" onChange={handleFileChange} />
           </label>
+          {/* Loading spinner saat upload */}
+          {uploading && (
+            <div className="mt-4 flex items-center gap-2 text-blue-500">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              <span>Uploading...</span>
+            </div>
+          )}
+          {/* Preview gambar */}
+          {preview && !uploading && (
+            <img src={preview} alt="Preview" className="mt-4 max-h-48 rounded shadow" />
+          )}
         </div>
 
         <div className="md:col-span-2">
-          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-            Simpan
+          {errMsg && <div className="text-red-500 mb-2">{errMsg}</div>}
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? "Menyimpan..." : "Simpan"}
           </button>
         </div>
       </form>
