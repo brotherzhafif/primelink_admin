@@ -1,4 +1,5 @@
 import { useState } from "react";
+import uploadIcon from "../assets/upload-foto.png"; // pastikan ini ada
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 
@@ -6,11 +7,29 @@ const TambahArtikel = () => {
   const [judul, setJudul] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [foto, setFoto] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState(null);
   const navigate = useNavigate();
+
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    setFoto(file);
+
+    if (file) {
+      setUploading(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,83 +51,90 @@ const TambahArtikel = () => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setFoto(file);
-    if (file) {
-      setUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPreview(null);
-      setUploading(false);
-    }
-  };
-
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-6">Tambah Artikel</h1>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-4">
-          <label className="flex flex-col">
-            <span className="mb-1">Judul</span>
+    <div className="p-2">
+      <h1 className="text-2xl font-semibold text-[#0D1B45] mb-6">Tambah Artikel</h1>
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-10"
+      >
+        {/* Kolom Kiri */}
+        <div className="flex flex-col gap-6">
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Judul
+            </label>
             <input
               type="text"
               placeholder="Masukkan Judul"
-              className="border border-gray-300 rounded px-3 py-2"
+              className="w-full border border-gray-300 rounded-lg px-6 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
               value={judul}
               onChange={(e) => setJudul(e.target.value)}
+              required
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col">
-            <span className="mb-1">Deskripsi</span>
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Deskripsi
+            </label>
             <textarea
               placeholder="Tuliskan Deskripsi"
-              className="border border-gray-300 rounded px-3 py-2 h-80 resize-none"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 h-64 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
               value={deskripsi}
               onChange={(e) => setDeskripsi(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Kolom Kanan */}
+        <div className="flex flex-col justify-between">
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Masukan Foto
+          </label>
+          <label className="border-2 border-dashed border-blue-400 rounded-xl p-10 flex flex-col items-center justify-center text-blue-600 hover:bg-blue-50 transition cursor-pointer min-h-[300px]">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-64 object-contain rounded"
+              />
+            ) : (
+              <>
+                <img
+                  src={uploadIcon}
+                  alt="Upload Icon"
+                  className="w-16 h-16 mb-4"
+                />
+                <span className="text-center text-sm font-medium">
+                  Masukkan Foto
+                </span>
+              </>
+            )}
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleFotoChange}
             />
           </label>
-        </div>
 
-        <div className="flex flex-col items-center justify-center border border-dashed border-blue-400 rounded-lg p-6">
-          <label className="cursor-pointer flex flex-col items-center text-blue-500">
-            <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l6-6 4 4 8-8" />
-            </svg>
-            <span>Masukkan Foto</span>
-            <input type="file" className="hidden" onChange={handleFileChange} />
-          </label>
-          {/* Loading spinner saat upload */}
+          {/* Spinner saat upload */}
           {uploading && (
-            <div className="mt-4 flex items-center gap-2 text-blue-500">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              <span>Uploading...</span>
-            </div>
+            <div className="text-sm text-blue-500 mt-2">Uploading preview...</div>
           )}
-          {/* Preview gambar */}
-          {preview && !uploading && (
-            <img src={preview} alt="Preview" className="mt-4 max-h-48 rounded shadow" />
-          )}
-        </div>
 
-        <div className="md:col-span-2">
-          {errMsg && <div className="text-red-500 mb-2">{errMsg}</div>}
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-            disabled={loading}
-          >
-            {loading ? "Menyimpan..." : "Simpan"}
-          </button>
+          <div className="mt-6 flex justify-end">
+            <button
+              type="submit"
+              className="bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+              disabled={loading}
+            >
+              {loading ? "Menyimpan..." : "Simpan"}
+            </button>
+          </div>
+          {errMsg && <div className="text-red-500 mt-2 text-sm">{errMsg}</div>}
         </div>
       </form>
     </div>
